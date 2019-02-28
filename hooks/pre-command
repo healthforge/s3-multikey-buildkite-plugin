@@ -39,7 +39,7 @@ if [[ -n "$s3_bucket" ]] ; then
           exit 1
         fi
         echo "Downloaded ${#ssh_key} bytes of ssh key"
-        add_ssh_private_key_to_agent "$ssh_key $keyname"
+        add_ssh_private_key_to_agent "$ssh_key" "$keyname"
       fi
     done < <(printf '%s\n' "$multikey")
   fi
