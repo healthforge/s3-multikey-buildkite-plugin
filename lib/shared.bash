@@ -44,6 +44,7 @@ add_ssh_private_key_to_agent() {
   local key_dir="$(mktemp -d)"
   pushd "$key_dir"
   echo "$ssh_key" > "$comment"
+  chmod 600 "$comment"
 
   echo "Loading ssh-key into ssh-agent (pid ${SSH_AGENT_PID:-})" >&2;
   env SSH_ASKPASS="/bin/false" ssh-add "$comment"
