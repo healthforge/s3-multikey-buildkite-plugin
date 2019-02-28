@@ -1,0 +1,45 @@
+#!/bin/bash
+
+set -eu -o pipefail
+
+basedir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && cd .. && pwd )"
+
+# shellcheck disable=SC1090
+. "$basedir/lib/shared.bash"
+
+TMPDIR=${TMPDIR:-/tmp}
+AWS_DEFAULT_REGION=${AWS_DEFAULT_REGION:-us-east-1}
+
+s3_bucket="${BUILDKITE_PLUGIN_S3_SECRETS_BUCKET:-}"
+s3_bucket_prefix="${BUILDKITE_PLUGIN_S3_SECRETS_BUCKET_PREFIX:-$BUILDKITE_PIPELINE_SLUG}"
+
+if [[ -n "$s3_bucket" ]] ; then
+  echo "~~~ Downloading multikey from :s3: $s3_bucket" >&2;
+
+  if ! s3_bucket_exists "$s3_bucket" ; then
+    echo "+++ :warning: Bucket $s3_bucket doesn't exist" >&2;
+    exit 1
+  fi
+
+  if s3_exists "$s3_bucket" "$s3_bucket_prefix/multikey" ; then
+    echo "Found multikey file, downloading" >&2;
+    if ! multikey=$(s3_download "${s3_bucket}" "$s3_bucket_prefix/multikey") ; then
+      echo "+++ :warning: Failed to download multikey file" >&2
+      exit 1
+    fi
+    echo "Downloaded ${#multikey} bytes of multikey file"
+    while IFS="," read -r provider repo; do
+      key="${s3_bucket_prefix}/multikey/${provider}-${repo//\//-}"
+      echo "Checking ${key}" >&2
+      if s3_exists "$s3_bucket" "$key" ; then
+        echo "Found ${key}, downloading" >&2;
+        if ! ssh_key=$(s3_download "${s3_bucket}" "$key") ; then
+          echo "+++ :warning: Failed to download ssh-key $key" >&2;
+          exit 1
+        fi
+        echo "Downloaded ${#ssh_key} bytes of ssh key"
+        add_ssh_private_key_to_agent "$ssh_key"
+      fi
+    done < <(printf '%s\n' "$multikey")
+  fi
+fi
