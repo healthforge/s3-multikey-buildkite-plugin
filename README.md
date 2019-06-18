@@ -7,13 +7,13 @@ reused.
 
 ## Keys
 
-Keys must be listed in a `multikey` file located in the pipeline folder of the s3 secrets bucket (e.g. `s3://secrets-bucket/my-pipeline/multikey`). 
+Keys must be listed in a `multikey.conf` file located in the pipeline folder of the s3 secrets bucket (e.g. `s3://secrets-bucket/my-pipeline/multikey.conf`). 
 
-An example multikey file:
+An example `multikey.conf` (2 column csv) file:
 
 ```
-bitbucket healthforge/my-repo
-github acme/another-repo
+bitbucket,healthforge/my-repo
+github,acme/another-repo
 ```
 
 Private keys should then be placed in a `multikey` folder also within the pipeline folder. Key filenames
@@ -34,17 +34,6 @@ steps:
   plugins:
     - healthforge/s3-multikey:
 ```
-
-For builds that need to clone other repositories place file `multikey.conf` in the
-root of the pipeline directory in S3
-
-Format, 2 column CSV:
-```
-bitbucket,healthforge-io/s3-multikey-buildkite-plugin
-github,healthforge/buildkite-key-rotator
-provider,owner/repository
-```
-
 
 ## License
 
